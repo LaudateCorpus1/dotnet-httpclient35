@@ -82,7 +82,7 @@ namespace System.Net.Http
 			base.Dispose (disposing);
 		}
 
-		protected internal override Task SerializeToStreamAsync (Stream stream, TransportContext context)
+		protected internal override Task SerializeToStreamAsync (Stream stream)
 		{
 			return content.CopyToAsync (stream, bufferSize, cancellationToken);
 		}

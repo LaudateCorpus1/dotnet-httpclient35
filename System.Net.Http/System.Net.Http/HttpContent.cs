@@ -81,13 +81,7 @@ namespace System.Net.Http
 				return buffer == null ? (long?)null : buffer.Length;
 			}
 		}
-
 		public Task CopyToAsync (Stream stream)
-		{
-			return CopyToAsync (stream, null);
-		}
-
-		public Task CopyToAsync (Stream stream, TransportContext context)
 		{
 			if (stream == null)
 				throw new ArgumentNullException ("stream");
@@ -95,7 +89,7 @@ namespace System.Net.Http
 			if (buffer != null)
 				return buffer.CopyToAsync (stream);
 
-			return SerializeToStreamAsync (stream, context);
+			return SerializeToStreamAsync (stream);
 		}
 
 		protected virtual Task<Stream> CreateContentReadStreamAsync ()
@@ -137,7 +131,7 @@ namespace System.Net.Http
 				return CompletedTask.Default;
 
 			buffer = CreateFixedMemoryStream (maxBufferSize);
-			return SerializeToStreamAsync (buffer, null)
+			return SerializeToStreamAsync (buffer)
 				.Select (_ => buffer.Seek (0, SeekOrigin.Begin));
 		}
 		
@@ -207,7 +201,7 @@ namespace System.Net.Http
 			return value.Length;
 		}
 
-		protected internal abstract Task SerializeToStreamAsync (Stream stream, TransportContext context);
+		protected internal abstract Task SerializeToStreamAsync (Stream stream);
 		protected internal abstract bool TryComputeLength (out long length);
 	}
 }

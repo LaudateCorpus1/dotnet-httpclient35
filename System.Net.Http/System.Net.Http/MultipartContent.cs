@@ -123,7 +123,7 @@ namespace System.Net.Http
 			base.Dispose (disposing);
 		}
 
-		protected internal override Task SerializeToStreamAsync (Stream stream, TransportContext context)
+		protected internal override Task SerializeToStreamAsync (Stream stream)
 		{
 			// RFC 2046
 			//
@@ -160,7 +160,7 @@ namespace System.Net.Http
 					sb.Length = 0;
 
 					return stream.WriteAsync (buffer, 0, buffer.Length)
-						.Then (_ => c.SerializeToStreamAsync (stream, context))
+						.Then (_ => c.SerializeToStreamAsync (stream))
 						.Select (
 							_ => {
 								if (i != nested_content.Count - 1) {
