@@ -26,10 +26,15 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System.Collections.Generic;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Specialized;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Linq;
 using Rackspace.Threading;
 
 namespace System.Net.Http
@@ -51,8 +56,8 @@ namespace System.Net.Http
 		bool useProxy;
 		ClientCertificateOption certificate;
 		int sentRequest;
-		HttpWebRequest wrequest;
-		string connectionGroupName;
+        HttpWebRequest wrequest;
+        string connectionGroupName;
 		int disposed;
 
 		public HttpClientHandler ()
@@ -222,12 +227,13 @@ namespace System.Net.Http
 
 		protected override void Dispose (bool disposing)
 		{
-			if (disposing) {
-				if (wrequest != null) {
-					wrequest.ServicePoint.CloseConnectionGroup (wrequest.ConnectionGroupName);
-					Interlocked.Exchange (ref wrequest, null);
-				}
-				Interlocked.Exchange (ref disposed, 1);
+			if (disposing && disposed == 0) {
+                Interlocked.Exchange(ref disposed, 1);
+                if (wrequest != null)
+                {
+                    wrequest.ServicePoint.CloseConnectionGroup(wrequest.ConnectionGroupName);
+                    Interlocked.Exchange(ref wrequest, null);
+                }
 			}
 
 			base.Dispose (disposing);
@@ -235,7 +241,9 @@ namespace System.Net.Http
 
 		internal virtual HttpWebRequest CreateWebRequest (HttpRequestMessage request)
 		{
-			var wr = (HttpWebRequest) WebRequest.Create (request.RequestUri);
+            var wr = (HttpWebRequest)WebRequest.Create(request.RequestUri);
+            //wr.ThrowOnError = false;
+			wr.AllowWriteStreamBuffering = false;
 
 			wr.ConnectionGroupName = connectionGroupName;
 			wr.Method = request.Method.Method;
@@ -246,8 +254,6 @@ namespace System.Net.Http
 			} else {
 				wr.KeepAlive = request.Headers.ConnectionClose != true;
 			}
-
-			wr.ServicePoint.Expect100Continue = request.Headers.ExpectContinue == true;
 
 			if (allowAutoRedirect) {
 				wr.AllowAutoRedirect = true;
@@ -272,11 +278,17 @@ namespace System.Net.Http
 
 			if (useProxy) {
 				wr.Proxy = proxy;
+			} else {
+				// Disables default WebRequest.DefaultWebProxy value
+				wr.Proxy = null;
 			}
+
+			wr.ServicePoint.Expect100Continue = request.Headers.ExpectContinue == true;
 
 			// Add request headers
 			AddRequestHeaders(wr, request.Headers);
 
+			
 			return wr;
 		}
 
@@ -301,153 +313,235 @@ namespace System.Net.Http
 				item_headers.TryAddWithoutValidation (key, value);
 			}
 
+			requestMessage.RequestUri = wr.ResponseUri;
+
 			return response;
 		}
 
-		protected internal override Task<HttpResponseMessage> SendAsync (HttpRequestMessage request, CancellationToken cancellationToken)
+		protected async internal override Task<HttpResponseMessage> SendAsync (HttpRequestMessage request, CancellationToken cancellationToken)
 		{
 			if (disposed != 0)
 				throw new ObjectDisposedException (GetType ().ToString ());
 
-			Interlocked.Exchange(ref sentRequest, 1);
-			wrequest = CreateWebRequest (request);
-
-			Task intermediate;
-			if (request.Content != null) {
-				AddContentHeaders(wrequest, request.Content.Headers);
-
-				intermediate = wrequest.GetRequestStreamAsync ()
-					.Then (streamTask => request.Content.CopyToAsync (streamTask.Result));
-			} else if (HttpMethod.Post.Equals (request.Method) || HttpMethod.Put.Equals (request.Method) || HttpMethod.Delete.Equals (request.Method)) {
-				// Explicitly set this to make sure we're sending a "Content-Length: 0" header.
-				// This fixes the issue that's been reported on the forums:
-				// http://forums.xamarin.com/discussion/17770/length-required-error-in-http-post-since-latest-release
-				wrequest.ContentLength = 0;
-				intermediate = CompletedTask.Default;
-			} else {
-				intermediate = CompletedTask.Default;
-			}
-
+            Interlocked.Exchange(ref sentRequest, 1);
+            wrequest = CreateWebRequest (request);
 			HttpWebResponse wresponse = null;
-			Func<Task<IDisposable>> resource =
-				() => CompletedTask.FromResult<IDisposable> (cancellationToken.Register (l => ((HttpWebRequest) l).Abort (), wrequest));
-			Func<Task<IDisposable>, Task> body =
-				_ => {
-					return wrequest.GetResponseAsync ().Select(task => wresponse = (HttpWebResponse)task.Result)
-						.Catch<WebException> (
-							(task, we) => {
-								if (we.Status == WebExceptionStatus.ProtocolError) {
-									// HttpClient shouldn't throw exceptions for these errors
-									wresponse = (HttpWebResponse) we.Response;
-								} else if (we.Status != WebExceptionStatus.RequestCanceled) {
-									// propagate the antecedent
-									return task;
-								}
 
-								return CompletedTask.Default;
-							})
-						.Then (
-							task => {
-								if (cancellationToken.IsCancellationRequested) {
-									return CompletedTask.Canceled<HttpResponseMessage> ();
-								} else {
-									return CompletedTask.Default;
-								}
-							});
-				};
+			try {
+				using (cancellationToken.Register (l => ((HttpWebRequest)l).Abort (), wrequest)) {
+					var content = request.Content;
+					if (content != null) {
+                        AddContentHeaders(wrequest, request.Content.Headers);
 
-			return intermediate
-				.Then (_ => TaskBlocks.Using (resource, body))
-				.Select (_ => CreateResponseMessage (wresponse, request, cancellationToken));
-		}
-
-		private static void AddRequestHeaders(HttpWebRequest request, HttpRequestHeaders headers) {
-			foreach (var header in headers) {
-				switch (header.Key.ToLowerInvariant ()) {
-				case "accept":
-					request.Accept = headers.Accept.ToString ();
-					break;
-
-				case "connection":
-					request.Connection = headers.Connection.ToString ();
-					break;
-
-				case "date":
-					// .NET 3.5 does not expose a property for setting this reserved header
-					goto default;
-
-				case "expect":
-					request.Expect = headers.Expect.ToString ();
-					break;
-
-				case "host":
-					// .NET 3.5 does not expose a property for setting this reserved header
-					goto default;
-
-				case "if-modified-since":
-					request.IfModifiedSince = headers.IfModifiedSince.Value.UtcDateTime;
-					break;
-
-				case "range":
-					foreach (var range in headers.Range.Ranges) {
-						checked {
-							if (!string.IsNullOrEmpty(headers.Range.Unit)) {
-								if (range.To.HasValue)
-									request.AddRange (headers.Range.Unit, (int) range.From.Value, (int) range.To.Value);
-								else
-									request.AddRange (headers.Range.Unit, (int) range.From.Value);
-							} else {
-								if (range.To.HasValue)
-									request.AddRange ((int) range.From.Value, (int) range.To.Value);
-								else
-									request.AddRange ((int) range.From.Value);
-							}
+                        //
+                        // Content length has to be set because HttpWebRequest is running without buffering
+                        //
+                        var contentLength = content.Headers.ContentLength;
+						if (contentLength != null) {
+							wrequest.ContentLength = contentLength.Value;
+						} else {
+							await content.LoadIntoBufferAsync (MaxRequestContentBufferSize).ConfigureAwait (false);
+							wrequest.ContentLength = content.Headers.ContentLength.Value;
 						}
+
+						//wrequest.ResendContentFactory = content.CopyTo;
+
+						var stream = await wrequest.GetRequestStreamAsync ().ConfigureAwait (false);
+						await request.Content.CopyToAsync (stream).ConfigureAwait (false);
+					} else if (HttpMethod.Post.Equals (request.Method) || HttpMethod.Put.Equals (request.Method) || HttpMethod.Delete.Equals (request.Method)) {
+						// Explicitly set this to make sure we're sending a "Content-Length: 0" header.
+						// This fixes the issue that's been reported on the forums:
+						// http://forums.xamarin.com/discussion/17770/length-required-error-in-http-post-since-latest-release
+						wrequest.ContentLength = 0;
 					}
 
-					break;
-
-				case "referer":
-					request.Referer = headers.Referrer.OriginalString;
-					break;
-
-				case "transfer-encoding":
-					request.TransferEncoding = headers.TransferEncoding.ToString ();
-					break;
-
-				case "user-agent":
-					request.UserAgent = headers.UserAgent.ToString ();
-					break;
-
-				default:
-					foreach (var value in header.Value) {
-						request.Headers.Add (header.Key, value);
-					}
-
-					break;
+					wresponse = (HttpWebResponse)await wrequest.GetResponseAsync ().ConfigureAwait (false);
 				}
+			} catch (WebException we) {
+				if (we.Status != WebExceptionStatus.RequestCanceled)
+					throw new HttpRequestException ("An error occurred while sending the request", we);
+			} catch (System.IO.IOException ex) {
+				throw new HttpRequestException ("An error occurred while sending the request", ex);
+			}
+
+			if (cancellationToken.IsCancellationRequested) {
+				var cancelled = new TaskCompletionSource<HttpResponseMessage> ();
+				cancelled.SetCanceled ();
+				return await cancelled.Task;
+			}
+			
+			return CreateResponseMessage (wresponse, request, cancellationToken);
+		}
+
+        private static void AddRequestHeaders(HttpWebRequest request, HttpRequestHeaders headers)
+        {
+            foreach (var header in headers)
+            {
+                switch (header.Key.ToLowerInvariant())
+                {
+                    case "accept":
+                        request.Accept = headers.Accept.ToString();
+                        break;
+
+                    case "connection":
+                        request.Connection = headers.Connection.ToString();
+                        break;
+
+                    case "date":
+                        // .NET 3.5 does not expose a property for setting this reserved header
+                        goto default;
+
+                    case "expect":
+                        request.Expect = headers.Expect.ToString();
+                        break;
+
+                    case "host":
+                        // .NET 3.5 does not expose a property for setting this reserved header
+                        goto default;
+
+                    case "if-modified-since":
+                        request.IfModifiedSince = headers.IfModifiedSince.Value.UtcDateTime;
+                        break;
+
+                    case "range":
+                        foreach (var range in headers.Range.Ranges)
+                        {
+                            checked
+                            {
+                                if (!string.IsNullOrEmpty(headers.Range.Unit))
+                                {
+                                    if (range.To.HasValue)
+                                        request.AddRange(headers.Range.Unit, (int)range.From.Value, (int)range.To.Value);
+                                    else
+                                        request.AddRange(headers.Range.Unit, (int)range.From.Value);
+                                }
+                                else
+                                {
+                                    if (range.To.HasValue)
+                                        request.AddRange((int)range.From.Value, (int)range.To.Value);
+                                    else
+                                        request.AddRange((int)range.From.Value);
+                                }
+                            }
+                        }
+
+                        break;
+
+                    case "referer":
+                        request.Referer = headers.Referrer.OriginalString;
+                        break;
+
+                    case "transfer-encoding":
+                        request.TransferEncoding = headers.TransferEncoding.ToString();
+                        break;
+
+                    case "user-agent":
+                        request.UserAgent = headers.UserAgent.ToString();
+                        break;
+
+                    default:
+                        foreach (var value in header.Value)
+                        {
+                            request.Headers.Add(header.Key, value);
+                        }
+
+                        break;
+                }
+            }
+        }
+
+        private static void AddContentHeaders(HttpWebRequest request, HttpContentHeaders headers)
+        {
+            foreach (var header in headers)
+            {
+                switch (header.Key.ToLowerInvariant())
+                {
+                    case "content-length":
+                        request.ContentLength = headers.ContentLength.Value;
+                        break;
+
+                    case "content-type":
+                        request.ContentType = headers.ContentType.ToString();
+                        break;
+
+                    default:
+                        foreach (var value in header.Value)
+                        {
+                            request.Headers.Add(header.Key, value);
+                        }
+
+                        break;
+                }
+            }
+        }
+
+#if NETSTANDARD
+		public bool CheckCertificateRevocationList {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
 			}
 		}
 
-		private static void AddContentHeaders(HttpWebRequest request, HttpContentHeaders headers) {
-			foreach (var header in headers) {
-				switch (header.Key.ToLowerInvariant ()) {
-				case "content-length":
-					request.ContentLength = headers.ContentLength.Value;
-					break;
-
-				case "content-type":
-					request.ContentType = headers.ContentType.ToString ();
-					break;
-
-				default:
-					foreach (var value in header.Value) {
-						request.Headers.Add (header.Key, value);
-					}
-
-					break;
-				}
+		public X509CertificateCollection ClientCertificates {
+			get {
+				throw new NotImplementedException ();
 			}
 		}
-	}
+
+		public ICredentials DefaultProxyCredentials {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
+			}
+		}
+
+		public int MaxConnectionsPerServer {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
+			}
+		}
+
+		public int MaxResponseHeadersLength {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
+			}
+		}
+
+		public IDictionary<string,object> Properties {
+			get {
+				throw new NotImplementedException ();
+			}
+		}
+
+		public Func<HttpRequestMessage,X509Certificate2,X509Chain,SslPolicyErrors,bool> ServerCertificateCustomValidationCallback {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
+			}
+		}
+
+		public SslProtocols SslProtocols {
+			get {
+				throw new NotImplementedException ();
+			}
+			set {
+				throw new NotImplementedException ();
+			}
+		}
+
+#endif
+    }
 }

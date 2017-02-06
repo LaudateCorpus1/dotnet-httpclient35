@@ -26,8 +26,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Globalization;
 using System.Net.Mail;
+using System.Globalization;
+using System.Collections.Generic;
 
 namespace System.Net.Http.Headers
 {
@@ -121,6 +122,17 @@ namespace System.Net.Http.Headers
 					result = null;
 					return false;
 				}
+			}
+		}
+
+		public static class Host
+		{
+			public static bool TryParse (string input, out string result)
+			{
+				result = input;
+
+				System.Uri dummy;
+				return System.Uri.TryCreate ("http://u@" + input + "/", UriKind.Absolute, out dummy);
 			}
 		}
 

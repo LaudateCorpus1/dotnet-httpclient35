@@ -26,8 +26,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Collections;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace System.Net.Http.Headers
 {
@@ -36,6 +36,7 @@ namespace System.Net.Http.Headers
 		readonly List<T> list;
 		readonly HttpHeaders headers;
 		readonly HeaderInfo headerInfo;
+		List<string> invalidValues;
 
 		internal HttpHeaderValueCollection (HttpHeaders headers, HeaderInfo headerInfo)
 		{
@@ -47,6 +48,12 @@ namespace System.Net.Http.Headers
 		public int Count {
 			get {
 				return list.Count;
+			}
+		}
+
+		internal List<string> InvalidValues {
+			get {
+				return invalidValues;
 			}
 		}
 
@@ -66,9 +73,18 @@ namespace System.Net.Http.Headers
 			list.AddRange (values);
 		}
 
+		internal void AddInvalidValue (string invalidValue)
+		{
+			if (invalidValues == null)
+				invalidValues = new List<string> ();
+
+			invalidValues.Add (invalidValue);
+		}
+
 		public void Clear ()
 		{
 			list.Clear ();
+			invalidValues = null;
 		}
 
 		public bool Contains (T item)
@@ -93,11 +109,12 @@ namespace System.Net.Http.Headers
 
 		public override string ToString ()
 		{
-			// This implementation prints different values than
-			// what .NET does when one of the values is invalid
-			// But it better represents what is actually hold by
-			// the collection
-			return StringEx.Join (", ", list);
+			var res = StringEx.Join (headerInfo.Separator, list);
+
+			if (invalidValues != null)
+				res += StringEx.Join (headerInfo.Separator, invalidValues);
+
+			return res;
 		}
 
 		public bool TryParseAdd (string input)

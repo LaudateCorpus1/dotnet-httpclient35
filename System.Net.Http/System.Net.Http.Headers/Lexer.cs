@@ -94,7 +94,7 @@ namespace System.Net.Http.Headers
 			/*90*/	true, false, false, false, true, true, true, true, true, true,
 			/*100*/	true, true, true, true, true, true, true, true, true, true,
 			/*110*/	true, true, true, true, true, true, true, true, true, true,
-			/*120*/	true, true, true, false, true, false
+			/*120*/	true, true, true, false, true, false, true
 			};
 
 		static readonly int last_token_char = token_chars.Length;
@@ -153,6 +153,11 @@ namespace System.Net.Http.Headers
 			return int.TryParse (GetStringValue (token), NumberStyles.None, CultureInfo.InvariantCulture, out value);
 		}
 
+		public bool TryGetNumericValue (Token token, out long value)
+		{
+			return long.TryParse (GetStringValue (token), NumberStyles.None, CultureInfo.InvariantCulture, out value);
+		}
+
 		public TimeSpan? TryGetTimeSpanValue (Token token)
 		{
 			int seconds;
@@ -193,11 +198,16 @@ namespace System.Net.Http.Headers
 			//
 			for (; i < input.Length; ++i) {
 				char s = input[i];
-				if (s > last_token_char || !token_chars[s])
+				if (!IsValidCharacter (s))
 					return false;
 			}
 
 			return i > 0;
+		}
+
+		public static bool IsValidCharacter (char input)
+		{
+			return input < last_token_char && token_chars[input];
 		}
 
 		public void EatChar ()
@@ -227,10 +237,20 @@ namespace System.Net.Http.Headers
 				return false;
 			}
 
+			int parens = 1;
 			while (pos < s.Length) {
 				var ch = s[pos];
+				if (ch == '(') {
+					++parens;
+					++pos;
+					continue;
+				}
+
 				if (ch == ')') {
 					++pos;
+					if (--parens > 0)
+						continue;
+
 					var start = readToken.StartPosition;
 					value = s.Substring (start, pos - start);
 					return true;
@@ -247,7 +267,7 @@ namespace System.Net.Http.Headers
 			return false;
 		}
 
-		public Token Scan ()
+		public Token Scan (bool recognizeDash = false)
 		{
 			int start = pos;
 			if (s == null)
@@ -279,8 +299,12 @@ namespace System.Net.Http.Headers
 					ttype = Token.Type.SeparatorSlash;
 					break;
 				case '-':
-					ttype = Token.Type.SeparatorDash;
-					break;
+					if (recognizeDash) {
+						ttype = Token.Type.SeparatorDash;
+						break;
+					}
+
+					goto default;
 				case ',':
 					ttype = Token.Type.SeparatorComma;
 					break;
@@ -288,18 +312,25 @@ namespace System.Net.Http.Headers
 					// Quoted string
 					start = pos - 1;
 					while (pos < s.Length) {
-						ch = s[pos];
-						if (ch == '"') {
-							++pos;
-							ttype = Token.Type.QuotedString;
+						ch = s [pos++];
+
+						//
+						// The backslash character ("\") MAY be used as a single-character
+   						// quoting mechanism only within quoted-string
+						//
+						if (ch == '\\') {
+							if (pos + 1 < s.Length) {
+								++pos;
+								continue;
+							}
+
 							break;
 						}
 
-						// any OCTET except CTLs, but including LWS
-						if (ch < 32 || ch > 126)
+						if (ch == '"') {
+							ttype = Token.Type.QuotedString;
 							break;
-
-						++pos;
+						}
 					}
 
 					break;
@@ -308,13 +339,13 @@ namespace System.Net.Http.Headers
 					ttype = Token.Type.OpenParens;
 					break;
 				default:
-					if (ch <= last_token_char && token_chars[ch]) {
+					if (ch < last_token_char && token_chars[ch]) {
 						start = pos - 1;
 
 						ttype = Token.Type.Token;
 						while (pos < s.Length) {
 							ch = s[pos];
-							if (ch > last_token_char || !token_chars[ch]) {
+							if (ch >= last_token_char || !token_chars[ch]) {
 								break;
 							}
 

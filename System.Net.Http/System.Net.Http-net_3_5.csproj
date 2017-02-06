@@ -44,6 +44,10 @@
     <AssemblyOriginatorKeyFile Condition="'$(KeyConfiguration)' != 'Final'">..\Build\keys\HttpClient35.dev.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AsyncBridge.Net35, Version=0.0.0.0, Culture=neutral, PublicKeyToken=b3b1c0202c0d6a87, processorArchitecture=MSIL">
+      <HintPath>packages\AsyncBridge.Net35.0.2.0\lib\net35-Client\AsyncBridge.Net35.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Rackspace.Threading, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bb62785d398726f0, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(SolutionDir)packages\Rackspace.Threading.2.0.0-alpha001\lib\net35-client\Rackspace.Threading.dll</HintPath>
@@ -99,6 +103,7 @@
     <Compile Include="System.Net.Http\HttpClientHandler.cs" />
     <Compile Include="System.Net.Http\HttpCompletionOption.cs" />
     <Compile Include="System.Net.Http\HttpContent.cs" />
+    <Compile Include="System.Net.Http\HttpListenerResponseHelper.cs" />
     <Compile Include="System.Net.Http\HttpMessageHandler.cs" />
     <Compile Include="System.Net.Http\HttpMessageInvoker.cs" />
     <Compile Include="System.Net.Http\HttpMethod.cs" />
@@ -124,6 +129,7 @@
     </None>
     <None Include="$(SolutionDir)packages.System.Net.Http-net_4_5.config" />
     <None Include="$(SolutionDir)Rackspace.HttpClient35.nuspec" />
+    <None Include="packages.System.Net.Http-net_3_5.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

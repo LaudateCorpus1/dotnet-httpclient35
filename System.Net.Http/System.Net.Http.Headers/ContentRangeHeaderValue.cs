@@ -26,8 +26,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Globalization;
+using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 namespace System.Net.Http.Headers
 {
@@ -146,7 +147,7 @@ namespace System.Net.Http.Headers
 			if (t != Token.Type.Token)
 				return false;
 
-			int nvalue;
+			long nvalue;
 			if (!lexer.IsStarStringValue (t)) {
 				if (!lexer.TryGetNumericValue (t, out nvalue)) {
 					var s = lexer.GetStringValue (t);
@@ -157,19 +158,19 @@ namespace System.Net.Http.Headers
 					if (sep.Length != 2)
 						return false;
 
-					if (!int.TryParse (sep[0], NumberStyles.None, CultureInfo.InvariantCulture, out nvalue))
+					if (!long.TryParse (sep[0], NumberStyles.None, CultureInfo.InvariantCulture, out nvalue))
 						return false;
 
 					value.From = nvalue;
 
-					if (!int.TryParse (sep[1], NumberStyles.None, CultureInfo.InvariantCulture, out nvalue))
+					if (!long.TryParse (sep[1], NumberStyles.None, CultureInfo.InvariantCulture, out nvalue))
 						return false;
 
 					value.To = nvalue;
 				} else {
 					value.From = nvalue;
 
-					t = lexer.Scan ();
+					t = lexer.Scan (recognizeDash: true);
 					if (t != Token.Type.SeparatorDash)
 						return false;
 
@@ -190,10 +191,11 @@ namespace System.Net.Http.Headers
 			t = lexer.Scan ();
 
 			if (!lexer.IsStarStringValue (t)) {
-				if (!lexer.TryGetNumericValue (t, out nvalue))
+				long lvalue;
+				if (!lexer.TryGetNumericValue (t, out lvalue))
 					return false;
 
-				value.Length = nvalue;
+				value.Length = lvalue;
 			}
 
 			t = lexer.Scan ();

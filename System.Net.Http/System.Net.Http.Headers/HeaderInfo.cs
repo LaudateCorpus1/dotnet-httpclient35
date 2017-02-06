@@ -26,8 +26,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace System.Net.Http.Headers
 {
@@ -70,13 +70,20 @@ namespace System.Net.Http.Headers
 					return null;
 
 				var c = (HttpHeaderValueCollection<U>) collection;
-				if (c.Count == 0)
-					return null;
+				if (c.Count == 0) {
+					if (c.InvalidValues == null)
+						return null;
+
+					return new List<string> (c.InvalidValues);
+				}
 
 				var list = new List<string> ();
 				foreach (var item in c) {
 					list.Add (item.ToString ());
 				}
+
+				if (c.InvalidValues != null)
+					list.AddRange (c.InvalidValues);
 
 				return list;
 			}
@@ -93,14 +100,22 @@ namespace System.Net.Http.Headers
 		class CollectionHeaderTypeInfo<T, U> : HeaderTypeInfo<T, U> where U : class
 		{
 			readonly int minimalCount;
-			TryParseListDelegate<T> parser;
+			readonly string separator;
+			readonly TryParseListDelegate<T> parser;
 
-			public CollectionHeaderTypeInfo (string name, TryParseListDelegate<T> parser, HttpHeaderKind headerKind, int minimalCount)
+			public CollectionHeaderTypeInfo (string name, TryParseListDelegate<T> parser, HttpHeaderKind headerKind, int minimalCount, string separator)
 				: base (name, null, headerKind)
 			{
 				this.parser = parser;
 				this.minimalCount = minimalCount;
 				AllowsMany = true;
+				this.separator = separator;
+			}
+
+			public override string Separator {
+				get {
+					return separator;
+				}
 			}
 
 			public override bool TryParse (string value, out object result)
@@ -126,22 +141,35 @@ namespace System.Net.Http.Headers
 			this.HeaderKind = headerKind;
 		}
 
-		public static HeaderInfo CreateSingle<T> (string name, TryParseDelegate<T> parser, HttpHeaderKind headerKind)
+		public static HeaderInfo CreateSingle<T> (string name, TryParseDelegate<T> parser, HttpHeaderKind headerKind, Func<object, string> toString = null)
 		{
-			return new HeaderTypeInfo<T, object> (name, parser, headerKind);
+			return new HeaderTypeInfo<T, object> (name, parser, headerKind) {
+				CustomToString = toString
+			};
 		}
 
 		//
 		// Headers with #rule for defining lists of elements or *rule for defining occurences of elements
 		//
-		public static HeaderInfo CreateMulti<T> (string name, TryParseListDelegate<T> elementParser, HttpHeaderKind headerKind, int minimalCount = 1) where T : class
+		public static HeaderInfo CreateMulti<T> (string name, TryParseListDelegate<T> elementParser, HttpHeaderKind headerKind, int minimalCount = 1, string separator = ", ") where T : class
 		{
-			return new CollectionHeaderTypeInfo<T, T> (name, elementParser, headerKind, minimalCount);
+			return new CollectionHeaderTypeInfo<T, T> (name, elementParser, headerKind, minimalCount, separator);
 		}
 
 		public object CreateCollection (HttpHeaders headers)
 		{
 			return CreateCollection (headers, this);
+		}
+
+		public Func<object, string> CustomToString {
+			get; private set;
+		}
+
+		public virtual string Separator {
+			get {
+				// Needed for AllowsMany only
+				throw new NotSupportedException ();
+			}
 		}
 
 		public abstract void AddToCollection (object collection, object value);

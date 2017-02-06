@@ -123,7 +123,7 @@ namespace System.Net.Http
 			base.Dispose (disposing);
 		}
 
-		protected internal override Task SerializeToStreamAsync (Stream stream)
+		protected internal override async Task SerializeToStreamAsync (Stream stream)
 		{
 			// RFC 2046
 			//
@@ -140,54 +140,41 @@ namespace System.Net.Http
 			sb.Append (boundary);
 			sb.Append ('\r').Append ('\n');
 
-			int i = 0;
-			Func<bool> condition = () => i < nested_content.Count;
-			Func<Task> body =
-				() => {
-					var c = nested_content [i];
+			for (int i = 0; i < nested_content.Count; i++) {
+				var c = nested_content [i];
 					
-					foreach (var h in c.Headers) {
-						sb.Append (h.Key);
-						sb.Append (':').Append (' ');
-						foreach (var v in h.Value) {
-							sb.Append (v);
-						}
-						sb.Append ('\r').Append ('\n');
+				foreach (var h in c.Headers) {
+					sb.Append (h.Key);
+					sb.Append (':').Append (' ');
+					foreach (var v in h.Value) {
+						sb.Append (v);
 					}
 					sb.Append ('\r').Append ('\n');
+				}
+				sb.Append ('\r').Append ('\n');
 					
-					buffer = Encoding.ASCII.GetBytes (sb.ToString ());
-					sb.Length = 0;
+				buffer = Encoding.ASCII.GetBytes (sb.ToString ());
+                sb.Length = 0;
+                await stream.WriteAsync (buffer, 0, buffer.Length).ConfigureAwait (false);
 
-					return stream.WriteAsync (buffer, 0, buffer.Length)
-						.Then (_ => c.SerializeToStreamAsync (stream))
-						.Select (
-							_ => {
-								if (i != nested_content.Count - 1) {
-									sb.Append ('\r').Append ('\n');
-									sb.Append ('-').Append ('-');
-									sb.Append (boundary);
-									sb.Append ('\r').Append ('\n');
-								}
-
-								i++;
-							});
-				};
-
-			Func<Task, Task> continuationFunction =
-				task => {
+				await c.SerializeToStreamAsync (stream).ConfigureAwait (false);
+					
+				if (i != nested_content.Count - 1) {
 					sb.Append ('\r').Append ('\n');
 					sb.Append ('-').Append ('-');
 					sb.Append (boundary);
-					sb.Append ('-').Append ('-');
 					sb.Append ('\r').Append ('\n');
+				}
+			}
+			
+			sb.Append ('\r').Append ('\n');
+			sb.Append ('-').Append ('-');
+			sb.Append (boundary);
+			sb.Append ('-').Append ('-');
+			sb.Append ('\r').Append ('\n');
 
-					buffer = Encoding.ASCII.GetBytes (sb.ToString ());
-					return stream.WriteAsync (buffer, 0, buffer.Length);
-				};
-
-			return TaskBlocks.While (condition, body)
-				.Then (continuationFunction);
+			buffer = Encoding.ASCII.GetBytes (sb.ToString ());
+			await stream.WriteAsync (buffer, 0, buffer.Length).ConfigureAwait (false);
 		}
 		
 		protected internal override bool TryComputeLength (out long length)
