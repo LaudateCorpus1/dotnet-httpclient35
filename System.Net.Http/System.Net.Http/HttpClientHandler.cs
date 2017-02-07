@@ -358,7 +358,8 @@ namespace System.Net.Http
 					wresponse = (HttpWebResponse)await wrequest.GetResponseAsync ().ConfigureAwait (false);
 				}
 			} catch (WebException we) {
-				if (we.Status != WebExceptionStatus.RequestCanceled)
+				wresponse = we.Response as HttpWebResponse;
+				if (wresponse == null)
 					throw new HttpRequestException ("An error occurred while sending the request", we);
 			} catch (System.IO.IOException ex) {
 				throw new HttpRequestException ("An error occurred while sending the request", ex);
