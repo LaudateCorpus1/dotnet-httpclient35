@@ -56,8 +56,8 @@ namespace System.Net.Http
 		bool useProxy;
 		ClientCertificateOption certificate;
 		int sentRequest;
-        HttpWebRequest wrequest;
-        string connectionGroupName;
+		HttpWebRequest wrequest;
+		string connectionGroupName;
 		int disposed;
 
 		public HttpClientHandler ()
@@ -228,12 +228,12 @@ namespace System.Net.Http
 		protected override void Dispose (bool disposing)
 		{
 			if (disposing && disposed == 0) {
-                Interlocked.Exchange(ref disposed, 1);
-                if (wrequest != null)
-                {
-                    wrequest.ServicePoint.CloseConnectionGroup(wrequest.ConnectionGroupName);
-                    Interlocked.Exchange(ref wrequest, null);
-                }
+				Interlocked.Exchange(ref disposed, 1);
+				if (wrequest != null)
+				{
+					wrequest.ServicePoint.CloseConnectionGroup(wrequest.ConnectionGroupName);
+					Interlocked.Exchange(ref wrequest, null);
+				}
 			}
 
 			base.Dispose (disposing);
@@ -241,8 +241,8 @@ namespace System.Net.Http
 
 		internal virtual HttpWebRequest CreateWebRequest (HttpRequestMessage request)
 		{
-            var wr = (HttpWebRequest)WebRequest.Create(request.RequestUri);
-            //wr.ThrowOnError = false;
+			var wr = (HttpWebRequest)WebRequest.Create(request.RequestUri);
+			//wr.ThrowOnError = false;
 			wr.AllowWriteStreamBuffering = false;
 
 			wr.ConnectionGroupName = connectionGroupName;
@@ -323,20 +323,20 @@ namespace System.Net.Http
 			if (disposed != 0)
 				throw new ObjectDisposedException (GetType ().ToString ());
 
-            Interlocked.Exchange(ref sentRequest, 1);
-            wrequest = CreateWebRequest (request);
+			Interlocked.Exchange(ref sentRequest, 1);
+			wrequest = CreateWebRequest (request);
 			HttpWebResponse wresponse = null;
 
 			try {
 				using (cancellationToken.Register (l => ((HttpWebRequest)l).Abort (), wrequest)) {
 					var content = request.Content;
 					if (content != null) {
-                        AddContentHeaders(wrequest, request.Content.Headers);
+						AddContentHeaders(wrequest, request.Content.Headers);
 
-                        //
-                        // Content length has to be set because HttpWebRequest is running without buffering
-                        //
-                        var contentLength = content.Headers.ContentLength;
+						//
+						// Content length has to be set because HttpWebRequest is running without buffering
+						//
+						var contentLength = content.Headers.ContentLength;
 						if (contentLength != null) {
 							wrequest.ContentLength = contentLength.Value;
 						} else {
@@ -374,107 +374,107 @@ namespace System.Net.Http
 			return CreateResponseMessage (wresponse, request, cancellationToken);
 		}
 
-        private static void AddRequestHeaders(HttpWebRequest request, HttpRequestHeaders headers)
-        {
-            foreach (var header in headers)
-            {
-                switch (header.Key.ToLowerInvariant())
-                {
-                    case "accept":
-                        request.Accept = headers.Accept.ToString();
-                        break;
+		private static void AddRequestHeaders(HttpWebRequest request, HttpRequestHeaders headers)
+		{
+			foreach (var header in headers)
+			{
+				switch (header.Key.ToLowerInvariant())
+				{
+					case "accept":
+						request.Accept = headers.Accept.ToString();
+						break;
 
-                    case "connection":
-                        request.Connection = headers.Connection.ToString();
-                        break;
+					case "connection":
+						request.Connection = headers.Connection.ToString();
+						break;
 
-                    case "date":
-                        // .NET 3.5 does not expose a property for setting this reserved header
-                        goto default;
+					case "date":
+						// .NET 3.5 does not expose a property for setting this reserved header
+						goto default;
 
-                    case "expect":
-                        request.Expect = headers.Expect.ToString();
-                        break;
+					case "expect":
+						request.Expect = headers.Expect.ToString();
+						break;
 
-                    case "host":
-                        // .NET 3.5 does not expose a property for setting this reserved header
-                        goto default;
+					case "host":
+						// .NET 3.5 does not expose a property for setting this reserved header
+						goto default;
 
-                    case "if-modified-since":
-                        request.IfModifiedSince = headers.IfModifiedSince.Value.UtcDateTime;
-                        break;
+					case "if-modified-since":
+						request.IfModifiedSince = headers.IfModifiedSince.Value.UtcDateTime;
+						break;
 
-                    case "range":
-                        foreach (var range in headers.Range.Ranges)
-                        {
-                            checked
-                            {
-                                if (!string.IsNullOrEmpty(headers.Range.Unit))
-                                {
-                                    if (range.To.HasValue)
-                                        request.AddRange(headers.Range.Unit, (int)range.From.Value, (int)range.To.Value);
-                                    else
-                                        request.AddRange(headers.Range.Unit, (int)range.From.Value);
-                                }
-                                else
-                                {
-                                    if (range.To.HasValue)
-                                        request.AddRange((int)range.From.Value, (int)range.To.Value);
-                                    else
-                                        request.AddRange((int)range.From.Value);
-                                }
-                            }
-                        }
+					case "range":
+						foreach (var range in headers.Range.Ranges)
+						{
+							checked
+							{
+								if (!string.IsNullOrEmpty(headers.Range.Unit))
+								{
+									if (range.To.HasValue)
+										request.AddRange(headers.Range.Unit, (int)range.From.Value, (int)range.To.Value);
+									else
+										request.AddRange(headers.Range.Unit, (int)range.From.Value);
+								}
+								else
+								{
+									if (range.To.HasValue)
+										request.AddRange((int)range.From.Value, (int)range.To.Value);
+									else
+										request.AddRange((int)range.From.Value);
+								}
+							}
+						}
 
-                        break;
+						break;
 
-                    case "referer":
-                        request.Referer = headers.Referrer.OriginalString;
-                        break;
+					case "referer":
+						request.Referer = headers.Referrer.OriginalString;
+						break;
 
-                    case "transfer-encoding":
-                        request.TransferEncoding = headers.TransferEncoding.ToString();
-                        break;
+					case "transfer-encoding":
+						request.TransferEncoding = headers.TransferEncoding.ToString();
+						break;
 
-                    case "user-agent":
-                        request.UserAgent = headers.UserAgent.ToString();
-                        break;
+					case "user-agent":
+						request.UserAgent = headers.UserAgent.ToString();
+						break;
 
-                    default:
-                        foreach (var value in header.Value)
-                        {
-                            request.Headers.Add(header.Key, value);
-                        }
+					default:
+						foreach (var value in header.Value)
+						{
+							request.Headers.Add(header.Key, value);
+						}
 
-                        break;
-                }
-            }
-        }
+						break;
+				}
+			}
+		}
 
-        private static void AddContentHeaders(HttpWebRequest request, HttpContentHeaders headers)
-        {
-            foreach (var header in headers)
-            {
-                switch (header.Key.ToLowerInvariant())
-                {
-                    case "content-length":
-                        request.ContentLength = headers.ContentLength.Value;
-                        break;
+		private static void AddContentHeaders(HttpWebRequest request, HttpContentHeaders headers)
+		{
+			foreach (var header in headers)
+			{
+				switch (header.Key.ToLowerInvariant())
+				{
+					case "content-length":
+						request.ContentLength = headers.ContentLength.Value;
+						break;
 
-                    case "content-type":
-                        request.ContentType = headers.ContentType.ToString();
-                        break;
+					case "content-type":
+						request.ContentType = headers.ContentType.ToString();
+						break;
 
-                    default:
-                        foreach (var value in header.Value)
-                        {
-                            request.Headers.Add(header.Key, value);
-                        }
+					default:
+						foreach (var value in header.Value)
+						{
+							request.Headers.Add(header.Key, value);
+						}
 
-                        break;
-                }
-            }
-        }
+						break;
+				}
+			}
+		}
 
 #if NETSTANDARD
 		public bool CheckCertificateRevocationList {
@@ -544,5 +544,5 @@ namespace System.Net.Http
 		}
 
 #endif
-    }
+	}
 }
