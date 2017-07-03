@@ -39,6 +39,8 @@ static class Consts
 	public const string MonoProduct = "Mono Common Language Infrastructure";
 	public const string MonoCopyright = "(c) Various Mono authors";
 
+	public const string FxInformationalSuffix = "-gfu";
+
 #if NET_2_1
 	// Versions of .NET Framework for Silverlight 4.0
 	public const string FxVersion = "2.0.5.0";
@@ -48,7 +50,6 @@ static class Consts
 #elif NET_4_5
 	public const string FxVersion = "1.0.0.0";
 	public const string FxFileVersion = "4.0.30319.17020";
-	public const string FxInformationalSuffix = "-dev";
 
 	public const string VsVersion = "0.0.0.0"; // Useless ?
 	public const string VsFileVersion = "11.0.0.0"; // TODO:
@@ -61,7 +62,7 @@ static class Consts
 #elif NET_3_5
 	// Versions of .NET Framework 3.5 RTM
 	public const string FxVersion = "3.5.0.0";
-	public const string FxFileVersion = "3.5.21022.8";
+	public const string FxFileVersion = "3.5.22000.1";
 	
 	public const string VsVersion = "0.0.0.0"; // Useless ?
 #elif NET_3_0
