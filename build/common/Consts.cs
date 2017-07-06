@@ -62,7 +62,7 @@ static class Consts
 #elif NET_3_5
 	// Versions of .NET Framework 3.5 RTM
 	public const string FxVersion = "3.5.0.0";
-	public const string FxFileVersion = "3.5.22000.1";
+	public const string FxFileVersion = "3.5.22000.2";
 	
 	public const string VsVersion = "0.0.0.0"; // Useless ?
 #elif NET_3_0
