@@ -35,24 +35,6 @@ using System;
 
 namespace DotNetHttp35
 {
-	public class HttpClient35 : HttpClient
-	{
-		public HttpClient35 ()
-			: base()
-		{
-		}
-		
-		public HttpClient35 (HttpMessageHandler handler)
-			: base (handler)
-		{
-		}
-
-		public HttpClient35 (HttpMessageHandler handler, bool disposeHandler)
-			: base (handler, disposeHandler)
-		{
-		}
-	}
-
 	public partial class HttpClient : HttpMessageInvoker
 	{
 		static readonly TimeSpan TimeoutDefault = TimeSpan.FromSeconds (100);
