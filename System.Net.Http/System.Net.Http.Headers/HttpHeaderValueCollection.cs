@@ -28,8 +28,9 @@
 
 using System.Collections.Generic;
 using System.Collections;
+using System;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	public sealed class HttpHeaderValueCollection<T> : ICollection<T> where T : class
 	{

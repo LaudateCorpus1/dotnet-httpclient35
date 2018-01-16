@@ -27,10 +27,12 @@
 //
 
 using System.Collections.Generic;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using System.Text;
+using System;
+using System.Net;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class HttpRequestMessage : IDisposable
 	{
@@ -48,7 +50,7 @@ namespace System.Net.Http
 		}
 
 		public HttpRequestMessage (HttpMethod method, string requestUri)
-			: this (method, string.IsNullOrEmpty (requestUri) ? (Uri) null : new Uri (requestUri, System.UriKind.RelativeOrAbsolute))
+			: this (method, string.IsNullOrEmpty (requestUri) ? (Uri) null : new Uri (requestUri, global::System.UriKind.RelativeOrAbsolute))
 		{
 		}
 

@@ -29,8 +29,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using DotNetHttp35;
+using DotNetHttp35.Headers;
 using System.IO;
 using System.Net;
 using System.Linq;

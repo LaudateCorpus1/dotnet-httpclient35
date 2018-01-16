@@ -29,7 +29,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace MonoTests.System.Net.Http.Headers

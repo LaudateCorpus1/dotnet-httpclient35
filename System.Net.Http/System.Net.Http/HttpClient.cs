@@ -27,13 +27,32 @@
 //
 
 using System.Threading;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using System.Threading.Tasks;
 using System.IO;
 using Rackspace.Threading;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
+	public class HttpClient35 : HttpClient
+	{
+		public HttpClient35 ()
+			: base()
+		{
+		}
+		
+		public HttpClient35 (HttpMessageHandler handler)
+			: base (handler)
+		{
+		}
+
+		public HttpClient35 (HttpMessageHandler handler, bool disposeHandler)
+			: base (handler, disposeHandler)
+		{
+		}
+	}
+
 	public partial class HttpClient : HttpMessageInvoker
 	{
 		static readonly TimeSpan TimeoutDefault = TimeSpan.FromSeconds (100);
@@ -97,7 +116,7 @@ namespace System.Net.Http
 				return timeout;
 			}
 			set {
-				if (value != TimeSpan.FromMilliseconds(System.Threading.Timeout.Infinite) && value < TimeSpan.Zero)
+				if (value != TimeSpan.FromMilliseconds(global::System.Threading.Timeout.Infinite) && value < TimeSpan.Zero)
 					throw new ArgumentOutOfRangeException ();
 
 				timeout = value;

@@ -26,12 +26,13 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	public abstract class HttpHeaders : IEnumerable<KeyValuePair<string, IEnumerable<string>>>
 	{

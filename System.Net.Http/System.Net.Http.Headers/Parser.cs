@@ -29,8 +29,9 @@
 using System.Net.Mail;
 using System.Globalization;
 using System.Collections.Generic;
+using System;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	static class Parser
 	{
@@ -131,8 +132,8 @@ namespace System.Net.Http.Headers
 			{
 				result = input;
 
-				System.Uri dummy;
-				return System.Uri.TryCreate ("http://u@" + input + "/", UriKind.Absolute, out dummy);
+                global::System.Uri dummy;
+				return global::System.Uri.TryCreate ("http://u@" + input + "/", UriKind.Absolute, out dummy);
 			}
 		}
 
@@ -185,9 +186,9 @@ namespace System.Net.Http.Headers
 
 		public static class Uri
 		{
-			public static bool TryParse (string input, out System.Uri result)
+			public static bool TryParse (string input, out global::System.Uri result)
 			{
-				return System.Uri.TryCreate (input, UriKind.RelativeOrAbsolute, out result);
+				return global::System.Uri.TryCreate (input, UriKind.RelativeOrAbsolute, out result);
 			}
 
 			public static void Check (string s)
@@ -195,7 +196,7 @@ namespace System.Net.Http.Headers
 				if (s == null)
 					throw new ArgumentNullException ();
 
-				System.Uri uri;
+                global::System.Uri uri;
 				if (!TryParse (s, out uri)) {
 					if (s.Length == 0)
 						throw new ArgumentException ();

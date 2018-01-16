@@ -29,8 +29,9 @@
 using System.IO;
 using System.Threading.Tasks;
 using Rackspace.Threading;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class ByteArrayContent: HttpContent
 	{

@@ -29,8 +29,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
+using System;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	public class CacheControlHeaderValue : ICloneable
 	{

@@ -27,11 +27,11 @@
 //
 
 using System;
-using System.Net.Http;
+using DotNetHttp35;
 using System.IO;
 using System.Text;
 using System.Linq;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace MonoTests.System.Net.Http

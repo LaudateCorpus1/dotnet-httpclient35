@@ -30,8 +30,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Rackspace.Threading;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class StreamContent : HttpContent
 	{

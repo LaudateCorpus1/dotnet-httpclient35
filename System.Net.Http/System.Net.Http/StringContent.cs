@@ -27,9 +27,9 @@
 //
 
 using System.Text;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class StringContent : ByteArrayContent
 	{

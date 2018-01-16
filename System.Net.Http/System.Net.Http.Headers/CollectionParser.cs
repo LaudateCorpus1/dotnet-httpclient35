@@ -28,7 +28,7 @@
 
 using System.Collections.Generic;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	delegate bool ElementTryParser<T> (Lexer lexer, out T parsedValue, out Token token);
 

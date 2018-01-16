@@ -28,8 +28,9 @@
 
 using System.Globalization;
 using System.Collections.Generic;
+using System;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	public class WarningHeaderValue : ICloneable
 	{

@@ -26,13 +26,14 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text;
 using Rackspace.Threading;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public abstract class HttpContent : IDisposable
 	{

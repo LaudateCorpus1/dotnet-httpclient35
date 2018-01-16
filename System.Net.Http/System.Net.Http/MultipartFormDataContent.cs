@@ -26,9 +26,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class MultipartFormDataContent : MultipartContent
 	{

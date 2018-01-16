@@ -26,7 +26,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-namespace System.Net.Http
+using System;
+
+namespace DotNetHttp35
 {
 	public class HttpMethod : IEquatable<HttpMethod>
 	{

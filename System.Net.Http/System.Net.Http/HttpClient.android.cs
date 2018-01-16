@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace System.Net.Http {
+namespace DotNetHttp35 {
 	public partial class HttpClient {
 
 		public HttpClient ()

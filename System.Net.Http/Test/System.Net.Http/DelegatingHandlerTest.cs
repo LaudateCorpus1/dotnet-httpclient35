@@ -28,7 +28,7 @@
 
 using System;
 using NUnit.Framework;
-using System.Net.Http;
+using DotNetHttp35;
 using System.IO;
 using System.Threading.Tasks;
 

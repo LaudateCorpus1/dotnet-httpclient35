@@ -29,7 +29,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public abstract class MessageProcessingHandler : DelegatingHandler
 	{

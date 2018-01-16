@@ -27,7 +27,7 @@
 //
 
 using System;
-using System.Net.Http;
+using DotNetHttp35;
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

@@ -29,8 +29,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
-using System.Net.Http;
+using DotNetHttp35.Headers;
+using DotNetHttp35;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

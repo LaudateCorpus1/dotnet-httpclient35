@@ -28,7 +28,7 @@
 
 using System.Collections.Generic;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	static class HashCodeCalculator
 	{

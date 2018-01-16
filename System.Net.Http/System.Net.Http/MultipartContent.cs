@@ -31,12 +31,13 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using System.Linq;
 using System.Text;
 using Rackspace.Threading;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class MultipartContent : HttpContent, IEnumerable<HttpContent>
 	{

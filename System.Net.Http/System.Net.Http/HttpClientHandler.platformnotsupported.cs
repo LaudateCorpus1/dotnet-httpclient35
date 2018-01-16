@@ -33,7 +33,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class HttpClientHandler : HttpMessageHandler
 	{

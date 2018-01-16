@@ -28,8 +28,9 @@
 
 using System.Diagnostics;
 using System.Collections.Generic;
+using System;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	delegate bool TryParseDelegate<T> (string value, out T result);
 	delegate bool TryParseListDelegate<T> (string value, int minimalCount, out List<T> result);

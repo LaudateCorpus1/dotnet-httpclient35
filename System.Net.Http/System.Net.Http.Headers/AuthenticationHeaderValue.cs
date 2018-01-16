@@ -26,9 +26,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System;
 using System.Collections.Generic;
 
-namespace System.Net.Http.Headers
+namespace DotNetHttp35.Headers
 {
 	public class AuthenticationHeaderValue : ICloneable
 	{

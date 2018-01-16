@@ -1,10 +1,10 @@
-﻿namespace System.Net.Http
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
+namespace DotNetHttp35
+{
     /// <summary>
     /// Provides extension and utility methods for the <see cref="string"/> class.
     /// </summary>

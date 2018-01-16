@@ -32,12 +32,14 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Specialized;
-using System.Net.Http.Headers;
+using DotNetHttp35.Headers;
 using System.Net.Security;
 using System.Linq;
 using Rackspace.Threading;
+using System.Net;
+using System;
 
-namespace System.Net.Http
+namespace DotNetHttp35
 {
 	public class HttpClientHandler : HttpMessageHandler
 	{
@@ -361,7 +363,7 @@ namespace System.Net.Http
 				wresponse = we.Response as HttpWebResponse;
 				if (wresponse == null)
 					throw new HttpRequestException ("An error occurred while sending the request", we);
-			} catch (System.IO.IOException ex) {
+			} catch (global::System.IO.IOException ex) {
 				throw new HttpRequestException ("An error occurred while sending the request", ex);
 			}
 
